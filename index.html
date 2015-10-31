@@ -11,8 +11,8 @@
 	
 	<body>
 		<script src="js/three.min.js"></script>
-		<script src="js/keyboard.js></script>
-		
+		<script src="js/keyboard.js"></script>
+		<script src="js/bearly.js"></script>
 		<script>
 			var scene = new THREE.Scene();
 			//fov, aspect ratio, near, far
@@ -28,12 +28,39 @@
 			var cube = new THREE.Mesh( geometry, material );
 			scene.add( cube );
 			
+			//ball
+			var sphereMat = new THREE.MeshLambertMaterial( { color: 0xD43001 } );
+			var ball = new THREE.Mesh(new THREE.SphereGeometry(1.2,6,6), sphereMat);
+			scene.add(ball);
+			ball.position.x = 4;
+			
+			//point light
+			// // create a point light
+			pointLight = new THREE.PointLight(0xF8D898);
+
+			// set its position
+			pointLight.position.x = -1000;
+			pointLight.position.y = 0;
+			pointLight.position.z = 1000;
+			pointLight.intensity = 2.9;
+			pointLight.distance = 10000;
+
+			// add to the scene
+			scene.add(pointLight);
+			
 			camera.position.z = 5;
+			
+			function setup() {
+				
+				
+				render();
+			}
 			
 			function render() {
 				requestAnimationFrame( render );
 				cube.rotation.x += 0.1;
 				cube.rotation.y += 0.1;
+				ball.rotation.z += 0.05;
 				renderer.render( scene, camera );
 			}
 			render();
