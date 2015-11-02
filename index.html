@@ -1,30 +1,40 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset=utf-8>
-		<title>:)</title>
-		<style>
-			body { margin: 0; }
-			canvas { width: 100%; height: 100% }
-		</style>
-	</head>
-	
-	<body>
-	<div id="bearly"></div>
-		<script src="js/three.min.js"></script>
-		<script src="js/keyboard.js"></script>
-		<script src="js/bearly.js"></script>
-		<script src="js/player.js"></script>
-		<script src="js/jquery-1.8.1.min.js"></script>
-		<script>
-			var playerSpeed = 4; playerVelY = 0; playerVelX = 0; free = true;
-			var scene = new THREE.Scene();
+<head>
+	<meta charset=utf-8>
+	<title>:)</title>
+	<style>
+		body { margin: 0; }
+		canvas { width: 100%; height: 100% }
+	</style>
+</head>
+
+<body>
+<div id="bearly"></div>
+	<script src="js/three.min.js"></script>
+	<script src="js/jquery-1.8.1.min.js"></script>
+	<script src="js/bearly.js"></script>
+	<script src="js/player.js"></script>
+	<script src="js/controls.js"></script>
+	<script>
+		var camera, scene, renderer, controls;
+		var clock = new THREE.Clock();
+		
+		init();
+		render();
+		
+		function init(){
+			scene = new THREE.Scene();
 			//fov, aspect ratio, near, far
-			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-			
-			var renderer = new THREE.WebGLRenderer();
+			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			scene.add(camera);
+			renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight);
-			(function(){$("#bearly").append( renderer.domElement );
+			
+			document.getElementById('bearly').appendChild(renderer.domElement);
+			//this probably did work, but
+			//I never knew because I didn't have an event listener for the mouseclick
+			/*(function(){$("#bearly").append( renderer.domElement );
 			window.addEventListener('mousemove', bearly.onDocumentMouseMove, false);
 			$(document).click( bearly.onMouseClick);})();
 			
@@ -32,7 +42,12 @@
 				event.preventDefault();
 				mouse2d.x = ((event.clientX - $("#bearly").offset().left) / window.innerWidth );
 				mouse2d.y = - (( (event.clientY)-$("#bearly").offset().top) / window.innerHeight );
-			}
+			};
+			
+			bearly.onMouseClick = function( event ) {
+				event.preventDefault();
+				click(mouse2d.x, mouse2d.y);
+			};*/
 			
 			//pulseBox
 			var pulseGeo = new THREE.IcosahedronGeometry();
@@ -42,66 +57,40 @@
 					side: THREE.DoubleSide,
 					shading: THREE.FlatShading
 				});
-			var pulseBox = new THREE.Mesh( pulseGeo, pulseMat);
-			scene.add( pulseBox);
+			pulseBox = new THREE.Mesh( pulseGeo, pulseMat);
+			scene.add(pulseBox);
 			pulseBox.position.x = 5;
 			
 			//cube
 			var geometry = new THREE.BoxGeometry( 1, 1, 1);
 			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			var cube = new THREE.Mesh( geometry, material );
+			cube = new THREE.Mesh( geometry, material );
 			scene.add( cube );
 			
 			//ball
 			var sphereMat = new THREE.MeshLambertMaterial( { color: 0xD43001 } );
-			var ball = new THREE.Mesh(new THREE.SphereGeometry(1.2,6,6), sphereMat);
+			ball = new THREE.Mesh(new THREE.SphereGeometry(1.2,6,6), sphereMat);
 			scene.add(ball);
 			ball.position.x = 4;
+			ball.position.y = 3;
 			
 			//flying torus
 			var torMat = new THREE.LineBasicMaterial( { color: 0xABCDEF } );
 			var torGeo = new THREE.TorusKnotGeometry( 2, 3, 100, 16);
-			var torK = new THREE.Mesh(torGeo, torMat);
+			torK = new THREE.Mesh(torGeo, torMat);
 			scene.add(torK);
 			torK.position.y = 15;
 			
-			var torVelX = 1, torVelY = 1, torSpeed = 2;
-			function torPhys(){
-				torK.position.x += torVelX * torSpeed;
-				torK.position.y += torVelY * torSpeed;
-				//shitty bounce logic
-				if (torK.position.y <= -200){
-					torVelY = -torVelY;
-				}
-				if (torK.position.y >= 200){
-					torVelY = -torVelY;
-				}
-				if (torK.position.x <= -400){
-					torVelX = -torVelX;
-				}
-				if (torK.position.x >= 400){
-					torVelX = -torVelX;
-				}
-				//speed limit
-				if (torVelY > torSpeed*2){
-					torVelY = torSpeed*2;
-				} else if(torVelY < -torSpeed*2){
-					torVelY = -torSpeed*2;
-				}
-			}
 			
-			//point light
-			// // create a point light
+			// create a point light
 			pointLight = new THREE.PointLight(0xF8D898);
 
-			// set its position
 			pointLight.position.x = -1000;
 			pointLight.position.y = 0;
 			pointLight.position.z = 1000;
 			pointLight.intensity = 2.9;
 			pointLight.distance = 10000;
 
-			// add to the scene
 			scene.add(pointLight);
 			
 			//create plane material
@@ -113,74 +102,79 @@
 			plane.receiveShadow = true;
 			plane.position.z = -5;
 			
-			camera.position.z = 5;
+			camera.position.z = 20;
+		
+			//setupSkybox();
+			controls = new controls(pulseBox, document.getElementById('bearly'));
+			controls.movementSpeed = 100;
+		};
+		
+		function render() {
+			requestAnimationFrame( render );
 			
-			function setup() {
-				setupSkybox();
-				
-				render();
-			}
+			var delta = clock.getDelta();
+			controls.update(delta);
+			cube.rotation.x += 0.1;
+			cube.rotation.y += 0.1;
+			ball.rotation.z += 0.04;
 			
-			function render() {
-				requestAnimationFrame( render );
-				cube.rotation.x += 0.1;
-				cube.rotation.y += 0.1;
-				ball.rotation.z += 0.04;
-				
-				//camera follows player (ima pulseBox)
-				camera.position.x = pulseBox.position.x - 16;
-				camera.position.z = pulseBox.position.z + 16;
-				camera.position.y = pulseBox.position.y;
-				camera.rotation.z = -90 * Math.PI/180;
-				camera.rotation.y = -60 * Math.PI/180;
-				
-				playerMovement();
-				torPhys();
-				
-				renderer.render( scene, camera );
-			}
+			//camera follows player (ima pulseBox)
+			camera.position.x = pulseBox.position.x - 16;
+			camera.position.z = pulseBox.position.z + 16;
+			camera.position.y = pulseBox.position.y;
+			camera.rotation.z = -90 * Math.PI/180;
+			camera.rotation.y = -60 * Math.PI/180;
+			//camera.lookAt(pulseBox);
 			
-			setup();
+			//playerMovement();
+			torPhys();
 			
-			window.addEventListener( 'resize', function () {
+			renderer.render( scene, camera );
+		};
+		
+		window.addEventListener( 'resize', function () {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}, false );
+		}, false );
+		
+		function setupSkybox(){
+			var urlPrefix = "img/day";
+			var urls = ["PosX.jpg", "NegX.jpg",
+				"PosY.jpg", "NegY.jpg",
+				"PosZ.jpg","NegZ.jpg" ];
+			var skyGeo = new THREE.CubeGeometry(5000, 5000, 5000);
+			var loader = new THREE.TextureLoader();
 			
-			function setupSkybox(){
-				var urlPrefix = "img/day";
-				var urls = ["PosX.jpg", "NegX.jpg",
-					"PosY.jpg", "NegY.jpg",
-					"PosZ.jpg","NegZ.jpg" ];
-				var skyGeo = new THREE.CubeGeometry(5000, 5000, 5000);
-				var loader = new THREE.TextureLoader();
-				
-				var materialArray = [];
-				for (var i=0;i<6;i++)
-					materialArray.push( new THREE.MeshBasicMaterial({
-						map: loader.load(urlPrefix + urls[i]),
-						side: THREE.BackSide
-					}));
-				var skyMat = new THREE.MeshFaceMaterial(materialArray);
-				var skyBox = new THREE.Mesh(skyGeo,skyMat);
-				scene.add(skyBox);
-			}
-		</script>
-		<script id="shader-vs" type="x-shader/x-vertex">
-			attribute vec3 aVertexPosition;
-			
-			void main(void) {
-				gl_position = aVertexPosition;
-			}
-		</script>
-		<script id="shader-fs" type="x-shader/x-fragment">
-			void main(void) {
-				gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-			}
-		</script>
-	</body>
+			var materialArray = [];
+			for (var i=0;i<6;i++)
+				materialArray.push( new THREE.MeshBasicMaterial({
+					map: loader.load(urlPrefix + urls[i]),
+					side: THREE.BackSide
+				}));
+			var skyMat = new THREE.MeshFaceMaterial(materialArray);
+			var skyBox = new THREE.Mesh(skyGeo,skyMat);
+			scene.add(skyBox);
+		};
+		
+		function click(x, y){
+			console.log("Mouse click at ("+x+","+y+")");
+		};
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+		uniform vec3 aVertexPosition;
+		
+		void main(void) {
+			gl_position = aVertexPosition;
+		}
+	</script>
+	<script id="shader-fs" type="x-shader/x-fragment">
+		void main(void) {
+			gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+	</script>
+</body>
 </html>
