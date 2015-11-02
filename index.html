@@ -10,10 +10,12 @@
 	</head>
 	
 	<body>
+	<div id="bearly"></div>
 		<script src="js/three.min.js"></script>
 		<script src="js/keyboard.js"></script>
 		<script src="js/bearly.js"></script>
 		<script src="js/player.js"></script>
+		<script src="js/jquery-1.8.1.min.js"></script>
 		<script>
 			var playerSpeed = 4; playerVelY = 0; playerVelX = 0; free = true;
 			var scene = new THREE.Scene();
@@ -22,7 +24,15 @@
 			
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight);
-			document.body.appendChild( renderer.domElement );
+			(function(){$("#bearly").append( renderer.domElement );
+			window.addEventListener('mousemove', bearly.onDocumentMouseMove, false);
+			$(document).click( bearly.onMouseClick);})();
+			
+			bearly.onDocumentMouseMove = function( event ) {
+				event.preventDefault();
+				mouse2d.x = ((event.clientX - $("#bearly").offset().left) / window.innerWidth );
+				mouse2d.y = - (( (event.clientY)-$("#bearly").offset().top) / window.innerHeight );
+			}
 			
 			//pulseBox
 			var pulseGeo = new THREE.IcosahedronGeometry();
@@ -53,6 +63,32 @@
 			var torGeo = new THREE.TorusKnotGeometry( 2, 3, 100, 16);
 			var torK = new THREE.Mesh(torGeo, torMat);
 			scene.add(torK);
+			torK.position.y = 15;
+			
+			var torVelX = 1, torVelY = 1, torSpeed = 2;
+			function torPhys(){
+				torK.position.x += torVelX * torSpeed;
+				torK.position.y += torVelY * torSpeed;
+				//shitty bounce logic
+				if (torK.position.y <= -200){
+					torVelY = -torVelY;
+				}
+				if (torK.position.y >= 200){
+					torVelY = -torVelY;
+				}
+				if (torK.position.x <= -400){
+					torVelX = -torVelX;
+				}
+				if (torK.position.x >= 400){
+					torVelX = -torVelX;
+				}
+				//speed limit
+				if (torVelY > torSpeed*2){
+					torVelY = torSpeed*2;
+				} else if(torVelY < -torSpeed*2){
+					torVelY = -torSpeed*2;
+				}
+			}
 			
 			//point light
 			// // create a point light
@@ -99,11 +135,12 @@
 				camera.rotation.y = -60 * Math.PI/180;
 				
 				playerMovement();
+				torPhys();
 				
 				renderer.render( scene, camera );
 			}
 			
-			render();
+			setup();
 			
 			window.addEventListener( 'resize', function () {
 
@@ -115,25 +152,22 @@
 			}, false );
 			
 			function setupSkybox(){
-				var urlPrefix = "img/";
-				var urls = [urlPrefix + "dayPosX.jpg", urlPrefix + "dayNegX.jpg",
-					urlPrefix + "dayPosY.jpg", urlPrefix + "dayNegY.jpg",
-					urlPrefix + "dayPosZ.jpg", urlPrefix + "dayNegZ.jpg" ];
-				var textureCube = THREE.ImageUtils.loadTextureCube(urls);
+				var urlPrefix = "img/day";
+				var urls = ["PosX.jpg", "NegX.jpg",
+					"PosY.jpg", "NegY.jpg",
+					"PosZ.jpg","NegZ.jpg" ];
+				var skyGeo = new THREE.CubeGeometry(5000, 5000, 5000);
+				var loader = new THREE.TextureLoader();
 				
-				var shader = THREE.ShaderLib['cube'];
-				var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
-				uniforms['tCube'].value = textureCube;
-				var material = new THREE.ShaderMaterial({
-					fragmentShader	: shader.fragmentShader,
-					vertexShader	: shader.vertexShader,
-					uniforms	: uniforms,
-					depthWrite	: false,
-					side 	: THREE.DoubleSide
-				});
-				
-				skyboxMesh = new THREE.Mesh( new THREE.CubeGeometry( 100000, 100000, 100000, 1, 1, 1), material);
-				scene.add(skyboxMesh);
+				var materialArray = [];
+				for (var i=0;i<6;i++)
+					materialArray.push( new THREE.MeshBasicMaterial({
+						map: loader.load(urlPrefix + urls[i]),
+						side: THREE.BackSide
+					}));
+				var skyMat = new THREE.MeshFaceMaterial(materialArray);
+				var skyBox = new THREE.Mesh(skyGeo,skyMat);
+				scene.add(skyBox);
 			}
 		</script>
 		<script id="shader-vs" type="x-shader/x-vertex">
