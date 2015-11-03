@@ -164,7 +164,7 @@ controls = function(object, domElement){
 	this.updateMovementVector = function(){
 		var forward = ( this.moveState.forward || ( this.autoForward && ! this.moveState.back ) ) ? 1 : 0;
 
-		this.moveVector.x = (-this.moveState.left + this.moveState.right );
+		this.moveVector.x = (-this.moveState.left + this.moveState.right )*4.20;
 		this.moveVector.y = (-this.moveState.down + this.moveState.up );
 		this.moveVector.z = (-forward + this.moveState.back );
 		

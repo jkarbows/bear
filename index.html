@@ -12,6 +12,7 @@
 <body>
 <div id="bearly"></div>
 	<script src="js/three.min.js"></script>
+	<script src="js/stats.min.js"></script>
 	<script src="js/bearly.js"></script>
 	<script src="js/player.js"></script>
 	<script src="js/controls.js"></script>
@@ -40,6 +41,9 @@
 			scene.add(pulseBox);
 			pulseBox.position.x = 5;
 			
+			pulseBox.add( camera );
+			camera.position.set( 0, 0, 100 );
+			
 			//cube
 			var geometry = new THREE.BoxGeometry( 1, 1, 1);
 			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
@@ -67,13 +71,29 @@
 
 			for ( var i = 0; i < 500; i ++ ) {
 
-				var mesh = new THREE.Mesh( geometry, material );
+				var mesh = new THREE.Mesh(geometry, material);
 				mesh.look=true;
 				mesh.position.x = Math.random() * 1000 - 500;
 				mesh.position.y = Math.random() * 1000 - 500;
 				mesh.position.z = Math.random() * 1000 - 500;
 				mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 8 + 2;
-				scene.add( mesh );
+				scene.add(mesh);
+
+			}
+			
+			var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
+			geometry.rotateX( Math.PI / 2 );
+			
+			var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
+
+			for(var i = 0; i < 500; i ++){
+				var mesh = new THREE.Mesh(geometry, material);
+				mesh.position.x = (Math.random()-0.5) * 1000;
+				mesh.position.y = (Math.random()-0.5) * 1000;
+				mesh.position.z = (Math.random()-0.5) * 50;
+				mesh.updateMatrix();
+				mesh.matrixAutoUpdate = false;
+				scene.add(mesh);
 
 			}
 			
@@ -90,10 +110,22 @@
 			pointLight.position.x = -1000;
 			pointLight.position.y = 0;
 			pointLight.position.z = 1000;
-			pointLight.intensity = 2.9;
+			pointLight.intensity = 2.0;
 			pointLight.distance = 10000;
 
 			scene.add(pointLight);
+			
+			//lights
+			light = new THREE.DirectionalLight( 0xffffff );
+			light.position.set( 1, 1, 1 );
+			scene.add( light );
+
+			light = new THREE.DirectionalLight( 0x002288 );
+			light.position.set( -1, -1, -1 );
+			scene.add( light );
+
+			light = new THREE.AmbientLight( 0x222222 );
+			scene.add( light );
 			
 			//create plane material
 			var planeMaterial = new THREE.MeshLambertMaterial( { color: 0x4BD121 });
@@ -116,6 +148,16 @@
 			//setupSkybox();
 			controls = new controls(pulseBox, document.getElementById('bearly'));
 			controls.movementSpeed = 100;
+			
+			//
+
+			stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			stats.domElement.style.zIndex = 100;
+			document.getElementById('bearly').appendChild( stats.domElement );
+
+			//
 		};
 		
 		function render() {
@@ -128,12 +170,12 @@
 			ball.rotation.z += 0.04;
 			
 			//camera follows player (ima pulseBox)
-			camera.position.x = pulseBox.position.x - 16;
+			/*camera.position.x = pulseBox.position.x - 16;
 			camera.position.z = pulseBox.position.z + 16;
 			camera.position.y = pulseBox.position.y;
 			camera.rotation.z = -90 * Math.PI/180;
 			camera.rotation.y = -60 * Math.PI/180;
-			//camera.lookAt(pulseBox);
+			*/camera.lookAt(pulseBox);
 			
 			//make looky-loos do the lookin
 			for ( var i = 1, l = scene.children.length; i < l; i ++ ) {
@@ -144,6 +186,7 @@
 			
 			//playerMovement();
 			torPhys();
+			stats.update();
 			
 			renderer.render( scene, camera );
 		};
@@ -169,7 +212,8 @@
 			for (var i=0;i<6;i++)
 				materialArray.push( new THREE.MeshBasicMaterial({
 					map: loader.load(urlPrefix + urls[i]),
-					side: THREE.BackSide
+					side: THREE.BackSide,
+					fog:false
 				}));
 			var skyMat = new THREE.MeshFaceMaterial(materialArray);
 			var skyBox = new THREE.Mesh(skyGeo,skyMat);
