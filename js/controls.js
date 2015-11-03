@@ -1,18 +1,18 @@
 /**
  *	flight controls
- *	in fact for the player, not bears
  *	adapted from Three.js FlyControls.js example by James Baicoianu
+ *  mad props to him forever for helping me out with this on IRC^^^
  */
 var MOUSE_X, MOUSE_Y;
 
 controls = function(object, domElement){
 	this.object = object;
-	
+		
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
 	if (domElement) this.domElement.setAttribute( 'tabindex', - 1 );
 	
 	this.movementSpeed = 1.0;
-	this.rollSpeed = 0.01;
+	this.rollSpeed = 1.0;
 	
 	this.dragToLook = false;
 	this.autoForward = false;
@@ -24,7 +24,7 @@ controls = function(object, domElement){
 	this.moveState = { up: 0, down: 0,
 		left: 0, right: 0,
 		forward: 0, back: 0,
-		pitchup: 0, pitchDown: 0,
+		pitchUp: 0, pitchDown: 0,
 		yawLeft: 0, yawRight: 0,
 		rollLeft: 0, rollRight: 0
 		};
@@ -154,8 +154,8 @@ controls = function(object, domElement){
 		this.object.translateY(this.moveVector.y*moveMult);
 		this.object.translateZ(this.moveVector.z*moveMult);
 		
-		//this.tmpQuaternion.set(this.rotationVector.x*rotMult, this.rotationVector.y*rotMult, this.rotationVector.z*rotMult, 1).normalize();
-		//this.object.quaternion.multiply(this.tmpQuaternion);
+		this.tmpQuaternion.set(this.rotationVector.x * rotMult, this.rotationVector.y * rotMult, this.rotationVector.z * rotMult, 1).normalize();
+		this.object.quaternion.multiply(this.tmpQuaternion);
 		
 		// expose the rotation vector for convenience
 		this.object.rotation.setFromQuaternion( this.object.quaternion, this.object.rotation.order );
@@ -164,25 +164,25 @@ controls = function(object, domElement){
 	this.updateMovementVector = function(){
 		var forward = ( this.moveState.forward || ( this.autoForward && ! this.moveState.back ) ) ? 1 : 0;
 
-		this.moveVector.x = ( - this.moveState.left    + this.moveState.right );
-		this.moveVector.y = ( - this.moveState.down    + this.moveState.up );
-		this.moveVector.z = ( - forward + this.moveState.back );
+		this.moveVector.x = (-this.moveState.left + this.moveState.right );
+		this.moveVector.y = (-this.moveState.down + this.moveState.up );
+		this.moveVector.z = (-forward + this.moveState.back );
 		
 		//console.log( 'move:', [ this.moveVector.x, this.moveVector.y, this.moveVector.z ] );
 	};
 	
 	this.updateRotationVector = function() {
-		this.rotationVector.x = ( - this.moveState.pitchDown + this.moveState.pitchUp );
-		this.rotationVector.y = ( - this.moveState.yawRight  + this.moveState.yawLeft );
-		this.rotationVector.z = ( - this.moveState.rollRight + this.moveState.rollLeft );
+		this.rotationVector.x = (-this.moveState.pitchDown + this.moveState.pitchUp );
+		this.rotationVector.y = (-this.moveState.yawRight  + this.moveState.yawLeft );
+		this.rotationVector.z = (-this.moveState.rollRight + this.moveState.rollLeft );
 
-		//console.log( 'rotate:', [ this.rotationVector.x, this.rotationVector.y, this.rotationVector.z ] );
+		console.log( 'rotate:', [ this.rotationVector.x, this.rotationVector.y, this.rotationVector.z ] );
 	};
 	
 	function bind(scope, fn){
 		return function(){
 			fn.apply(scope, arguments);
-		}
+		};
 	};
 	
 	function contextmenu(event){
