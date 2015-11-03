@@ -12,7 +12,6 @@
 <body>
 <div id="bearly"></div>
 	<script src="js/three.min.js"></script>
-	<script src="js/jquery-1.8.1.min.js"></script>
 	<script src="js/bearly.js"></script>
 	<script src="js/player.js"></script>
 	<script src="js/controls.js"></script>
@@ -28,23 +27,6 @@
 			//fov, aspect ratio, near, far
 			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 			scene.add(camera);
-			
-			//this probably did work, but
-			//I never knew because I didn't have an event listener for the mouseclick
-			/*(function(){$("#bearly").append( renderer.domElement );
-			window.addEventListener('mousemove', bearly.onDocumentMouseMove, false);
-			$(document).click( bearly.onMouseClick);})();
-			
-			bearly.onDocumentMouseMove = function( event ) {
-				event.preventDefault();
-				mouse2d.x = ((event.clientX - $("#bearly").offset().left) / window.innerWidth );
-				mouse2d.y = - (( (event.clientY)-$("#bearly").offset().top) / window.innerHeight );
-			};
-			
-			bearly.onMouseClick = function( event ) {
-				event.preventDefault();
-				click(mouse2d.x, mouse2d.y);
-			};*///also I moved this all to the bottom of the init
 			
 			//pulseBox
 			var pulseGeo = new THREE.IcosahedronGeometry();
@@ -78,7 +60,7 @@
 			scene.add(torK);
 			torK.position.y = 15;
 			
-			geometry = new THREE.CylinderGeometry( 0, 8, 32, 3 );
+			geometry = new THREE.CylinderGeometry( 0, 4, 16, 3 );
 			geometry.rotateX( Math.PI / 2 );
 
 			var material = new THREE.MeshNormalMaterial();
@@ -86,16 +68,17 @@
 			for ( var i = 0; i < 500; i ++ ) {
 
 				var mesh = new THREE.Mesh( geometry, material );
+				mesh.look=true;
 				mesh.position.x = Math.random() * 1000 - 500;
 				mesh.position.y = Math.random() * 1000 - 500;
 				mesh.position.z = Math.random() * 1000 - 500;
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 4 + 2;
+				mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 8 + 2;
 				scene.add( mesh );
 
 			}
 			
 			geometry = new THREE.CylinderGeometry( 0, 10, 100, 3 );
-			material = new THREE.MeshBasicMaterial({color:0xEE23EE});
+			material = new THREE.MeshPhongMaterial({color:0xEE23EE,shading:THREE.FlatShading});
 			var tri = new THREE.Mesh(geometry,material);
 			scene.add(tri);
 			tri.position.x=-6;
@@ -152,12 +135,11 @@
 			camera.rotation.y = -60 * Math.PI/180;
 			//camera.lookAt(pulseBox);
 			
-			/*if set between 0 and 1000 all triangles will point at player
-			 *solution isn't sustainable, right
-			 *was i=1,l=scene.children.length,i<l
-			*/
-			for ( var i = 1; i < 500; i ++ ) {
-				//scene.children[ i ].lookAt( pulseBox.position );
+			//make looky-loos do the lookin
+			for ( var i = 1, l = scene.children.length; i < l; i ++ ) {
+				if(scene.children[i].look){
+					scene.children[ i ].lookAt( pulseBox.position );
+				}
 			}
 			
 			//playerMovement();
