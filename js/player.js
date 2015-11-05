@@ -1,4 +1,9 @@
 //hey isn't this supposed to be a player class...
+var playerHeight;
+
+function playerPhysics(){
+	
+}
 
 //for some reason this broke when I added an init() function
 //and for some reason moving it here made it work again

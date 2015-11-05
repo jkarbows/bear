@@ -19,8 +19,11 @@
 	<script src="js/worldgen.js"></script>
 	<script src="js/ImprovedNoise.js"></script>
 	<script>
-		var camera, scene, renderer, controls;
+		var camera, scene, renderer, controls, cursor;
+		var player, frame;
 		var clock = new THREE.Clock();
+		var raycaster = new THREE.Raycaster();
+		var time = 0;
 		
 		init();
 		render();
@@ -28,13 +31,15 @@
 		function init(){
 			scene = new THREE.Scene();
 			//fov, aspect ratio, near, far
-			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
 			scene.add(camera);
+
+			scene.fog = new THREE.FogExp2( 0xE0EEEE, 0.0005 );//THREE.Fog(0xefd1b5,near,far);
 			
 			//setupSkybox();
-			//generateWorld();
+			generateWorld();
 			
-			data = generateHeight(1000,1000);
+			/*data = generateHeight(1000,1000);
 			
 			var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, 999, 999 );
 			geometry.rotateX( - Math.PI / 2 );
@@ -45,9 +50,9 @@
 			}
 			
 			var plane = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x4BD121,shading:THREE.FlatShading}));
-			scene.add(plane);
+			scene.add(plane);*/
 		
-			//pulseBox
+			//player
 			var pulseGeo = new THREE.IcosahedronGeometry();
 			var pulseMat = new THREE.MeshPhongMaterial({
 					color: 0x156289,
@@ -55,13 +60,30 @@
 					side: THREE.DoubleSide,
 					shading: THREE.FlatShading
 				});
-			pulseBox = new THREE.Mesh( pulseGeo, pulseMat);
-			scene.add(pulseBox);
-			pulseBox.castShadow = true;
-			pulseBox.position.x = 5;
+			player = new THREE.Mesh( pulseGeo, pulseMat);
+			scene.add(player);
+			player.castShadow = true;
+			player.position.x = 5;
 			
-			pulseBox.add( camera );
+			//frame
+			var frameGeo = new THREE.IcosahedronGeometry(4);
+			var frameMat = new THREE.MeshBasicMaterial({color: 0x400040,
+				wireframe:true,
+				//wireframeLinewidth:16,//apparently this value can't be changed on windows
+				//visible:false
+			});
+			frame = new THREE.Mesh(frameGeo,frameMat);
+			scene.add(frame);
+			frame.position = player.position;
+			
+			player.add(camera);
 			camera.position.set( 0, 0, 100 );
+			player.add(frame);
+			
+			//cursor marker
+			var geometry = new THREE.CircleGeometry(5,32);
+			cursor = new THREE.Mesh(geometry, new THREE.LineDashedMaterial(0xEEEEEE));
+			scene.add(cursor);
 			
 			//cube
 			var geometry = new THREE.BoxGeometry( 1, 1, 1);
@@ -96,22 +118,6 @@
 				mesh.position.y = Math.random() * 1000 - 500;
 				mesh.position.z = Math.random() * 1000 - 500;
 				mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 8 + 2;
-				scene.add(mesh);
-
-			}
-			
-			var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
-			geometry.rotateX( Math.PI / 2 );
-			
-			var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
-
-			for(var i = 0; i < 500; i ++){
-				var mesh = new THREE.Mesh(geometry, material);
-				mesh.position.x = (Math.random()-0.5) * 1000;
-				mesh.position.y = (Math.random()-0.5) * 1000;
-				mesh.position.z = (Math.random()-0.5) * 50;
-				mesh.updateMatrix();
-				mesh.matrixAutoUpdate = false;
 				scene.add(mesh);
 
 			}
@@ -156,7 +162,12 @@
 			//renderer.shadowMap.enabled = true;
 			document.getElementById('bearly').appendChild(renderer.domElement);
 			
-			controls = new controls(pulseBox, document.getElementById('bearly'));
+			//birds
+			/*simulator = new SimulationRenderer(window.innerWidth, renderer);
+			simulator.init();
+			initBirds();*/
+			
+			controls = new controls(player, document.getElementById('bearly'));
 			controls.movementSpeed = 100;
 			
 			//throw fps counter in the corner
@@ -168,36 +179,46 @@
 
 		};
 		
-		function render() {
-			requestAnimationFrame( render );
-			
+		function update() {
 			var delta = clock.getDelta();
 			controls.update(delta);
 			cube.rotation.x += 0.1;
 			cube.rotation.y += 0.1;
 			ball.rotation.z += 0.04;
 			
-			//camera follows player (ima pulseBox)
-			/*camera.position.x = pulseBox.position.x - 16;
-			camera.position.z = pulseBox.position.z + 16;
-			camera.position.y = pulseBox.position.y;
+			//camera follows player (ima player)
+			/*camera.position.x = player.position.x - 16;
+			camera.position.z = player.position.z + 16;
+			camera.position.y = player.position.y;
 			camera.rotation.z = -90 * Math.PI/180;
 			camera.rotation.y = -60 * Math.PI/180;
-			*/camera.lookAt(pulseBox);
+			*/camera.lookAt(player);
 			
 			//make looky-loos do the lookin
 			for ( var i = 1, l = scene.children.length; i < l; i ++ ) {
 				if(scene.children[i].look){
-					scene.children[ i ].lookAt( pulseBox.position );
+					scene.children[ i ].lookAt( player.position );
 				}
 			}
+			
+			//wiggle the plane on a cosine jig mane
+			/*time++;
+			for ( var i = 0, l = planeGeo.vertices.length; i < l; i ++ ) {
+				planeGeo.vertices[ i ].z = 35 * Math.sin( i / 5 + ( time*0.25 + i ) / 7 );
+			}
+			plane.geometry.verticesNeedUpdate = true;*/
 			
 			//playerMovement();
 			torPhys();
 			stats.update();
 			
-			renderer.render( scene, camera );
 		};
+		
+		function render(){
+		requestAnimationFrame( render );
+		update();
+		renderer.render( scene, camera );
+		}
 		
 		window.addEventListener( 'resize', function () {
 

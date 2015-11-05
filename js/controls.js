@@ -3,7 +3,8 @@
  *	adapted from Three.js FlyControls.js example by James Baicoianu
  *  mad props to him forever for helping me out with this on IRC^^^
  */
-var MOUSE_X, MOUSE_Y;
+var mouse = new THREE.Vector2();
+var ray = new THREE.Raycaster(new THREE.Vector3(),new THREE.Vector3(),1,16);
 
 controls = function(object, domElement){
 	this.object = object;
@@ -100,8 +101,8 @@ controls = function(object, domElement){
 	this.mousedown = function(event){
 		if(this.domElement!==document){
 			this.domElement.focus();
-			MOUSE_X = (event.pageX);
-			MOUSE_Y = (event.pageY);
+			mouse.x = (event.pageX);
+			mouse.y = (event.pageY);
 		}
 		
 		event.preventDefault();
@@ -118,13 +119,22 @@ controls = function(object, domElement){
 			this.updateRotationVector();
 		}
 		
-		click(MOUSE_X,MOUSE_Y);
+		click(mouse.x,mouse.y);
 	};
 	
 	this.mousemove = function(event){
-		MOUSE_X = (event.pageX);
-		MOUSE_Y = (event.pageY);
-		//console.log("mouse: ("+MOUSE_X+","+MOUSE_Y+")");
+		//I have no idea why you do this. Something about normalized coordinates(between -1 and 1)
+		mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+		mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+		
+		raycaster.setFromCamera(mouse,camera);
+		var intersects = raycaster.intersectObject(plane);
+		if(intersects.length>0){
+			cursor.position.set(0,0,0);
+			cursor.lookAt(intersects[0].face.normal);
+			cursor.position.copy(intersects[0].point);
+		}
+		//console.log("mouse: ("+mouse.x+","+mouse.y+")");
 	};
 	
 	this.mouseup = function(event){
@@ -154,6 +164,19 @@ controls = function(object, domElement){
 		this.object.translateY(this.moveVector.y*moveMult);
 		this.object.translateZ(this.moveVector.z*moveMult);
 		
+		//calculate whether player height is above the average of nearest points
+		//very rought, only works in one quadrant because I forgot negative numbers exist
+		//wait that should be really east to fix
+		var indX = Math.floor(this.object.position.x);
+		var indY = Math.floor(this.object.position.y);
+		var ind  = (indY*10)+(indX-1);
+		var badAvg = (planeGeo.vertices[ind].z +planeGeo.vertices[ind+1].z+
+			planeGeo.vertices[ind+10].z+planeGeo.vertices[ind+11].z)/4;
+		
+		if(this.object.position.z <= badAvg){
+			this.object.position.z = badAvg + 1;
+		}
+		
 		this.tmpQuaternion.set(this.rotationVector.x * rotMult, this.rotationVector.y * rotMult, this.rotationVector.z * rotMult, 1).normalize();
 		this.object.quaternion.multiply(this.tmpQuaternion);
 		
@@ -167,6 +190,23 @@ controls = function(object, domElement){
 		this.moveVector.x = (-this.moveState.left + this.moveState.right )*4.20;
 		this.moveVector.y = (-this.moveState.down + this.moveState.up );
 		this.moveVector.z = (-forward + this.moveState.back );
+		
+		/*var originPoint = frame.position.clone();
+	
+		for (var vertexIndex = 0; vertexIndex < frame.geometry.vertices.length; vertexIndex++)
+		{		
+			var localVertex = frame.geometry.vertices[vertexIndex].clone();
+			var globalVertex = localVertex.applyMatrix4( frame.matrix );
+			var directionVector = globalVertex.sub( frame.position );
+			
+			ray.set( originPoint, directionVector.clone().normalize());
+			//var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+			var collisionResults = ray.intersectObject( plane );
+			if ( collisionResults.length > 0 /*&& collisionResults[0].distance < directionVector.length() ){ 
+				this.moveVector.addVectors(this.moveVector,-directionVector.clone().normalize());
+				console.log("something");
+			}
+		}*/
 		
 		//console.log( 'move:', [ this.moveVector.x, this.moveVector.y, this.moveVector.z ] );
 	};
