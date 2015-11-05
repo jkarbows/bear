@@ -176,7 +176,7 @@ controls = function(object, domElement){
 		this.rotationVector.y = (-this.moveState.yawRight  + this.moveState.yawLeft );
 		this.rotationVector.z = (-this.moveState.rollRight + this.moveState.rollLeft );
 
-		console.log( 'rotate:', [ this.rotationVector.x, this.rotationVector.y, this.rotationVector.z ] );
+		//console.log( 'rotate:', [ this.rotationVector.x, this.rotationVector.y, this.rotationVector.z ] );
 	};
 	
 	function bind(scope, fn){

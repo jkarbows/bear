@@ -39,6 +39,7 @@
 				});
 			pulseBox = new THREE.Mesh( pulseGeo, pulseMat);
 			scene.add(pulseBox);
+			pulseBox.castShadow = true;
 			pulseBox.position.x = 5;
 			
 			pulseBox.add( camera );
@@ -132,32 +133,31 @@
 			
 			//create the playing surface plane
 			var plane = new THREE.Mesh(new THREE.PlaneGeometry(400*0.95, 200, 10, 10), planeMaterial);
-			scene.add(plane);
 			plane.receiveShadow = true;
+			scene.add(plane);
 			plane.position.z = -5;
 			
 			camera.position.z = 20;
 			
 			renderer = new THREE.WebGLRenderer();
-			renderer.setClearColor( 0xffffff );
+			renderer.setClearColor( 0xE0EEEE );
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			renderer.sortObjects = false;
+			//renderer.shadowMap.enabled = true;
 			document.getElementById('bearly').appendChild(renderer.domElement);
 			
 			//setupSkybox();
 			controls = new controls(pulseBox, document.getElementById('bearly'));
 			controls.movementSpeed = 100;
 			
-			//
-
+			//throw fps counter in the corner
 			stats = new Stats();
 			stats.domElement.style.position = 'absolute';
 			stats.domElement.style.top = '0px';
 			stats.domElement.style.zIndex = 100;
 			document.getElementById('bearly').appendChild( stats.domElement );
 
-			//
 		};
 		
 		function render() {
