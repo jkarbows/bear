@@ -191,6 +191,7 @@ controls = function(object, domElement){
 		this.moveVector.y = (-this.moveState.down + this.moveState.up );
 		this.moveVector.z = (-forward + this.moveState.back );
 		
+		//raycasting is for bitches
 		/*var originPoint = frame.position.clone();
 	
 		for (var vertexIndex = 0; vertexIndex < frame.geometry.vertices.length; vertexIndex++)
