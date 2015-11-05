@@ -16,6 +16,8 @@
 	<script src="js/bearly.js"></script>
 	<script src="js/player.js"></script>
 	<script src="js/controls.js"></script>
+	<script src="js/worldgen.js"></script>
+	<script src="js/ImprovedNoise.js"></script>
 	<script>
 		var camera, scene, renderer, controls;
 		var clock = new THREE.Clock();
@@ -29,6 +31,22 @@
 			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 			scene.add(camera);
 			
+			//setupSkybox();
+			//generateWorld();
+			
+			data = generateHeight(1000,1000);
+			
+			var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, 999, 999 );
+			geometry.rotateX( - Math.PI / 2 );
+			
+			var vertices = geometry.attributes.position.array;
+			for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+				vertices[ j + 1 ] = data[ i ] * 10;
+			}
+			
+			var plane = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x4BD121,shading:THREE.FlatShading}));
+			scene.add(plane);
+		
 			//pulseBox
 			var pulseGeo = new THREE.IcosahedronGeometry();
 			var pulseMat = new THREE.MeshPhongMaterial({
@@ -127,16 +145,7 @@
 
 			light = new THREE.AmbientLight( 0x222222 );
 			scene.add( light );
-			
-			//create plane material
-			var planeMaterial = new THREE.MeshLambertMaterial( { color: 0x4BD121 });
-			
-			//create the playing surface plane
-			var plane = new THREE.Mesh(new THREE.PlaneGeometry(400*0.95, 200, 10, 10), planeMaterial);
-			plane.receiveShadow = true;
-			scene.add(plane);
-			plane.position.z = -5;
-			
+						
 			camera.position.z = 20;
 			
 			renderer = new THREE.WebGLRenderer();
@@ -147,7 +156,6 @@
 			//renderer.shadowMap.enabled = true;
 			document.getElementById('bearly').appendChild(renderer.domElement);
 			
-			//setupSkybox();
 			controls = new controls(pulseBox, document.getElementById('bearly'));
 			controls.movementSpeed = 100;
 			
